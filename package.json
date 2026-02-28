@@ -1,6 +1,6 @@
 {
   "name": "code-maester",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Automated code quality analysis — bug detection, security scanning, complexity metrics, and auto-formatting for JS, Python, Java, and C/C++",
   "main": "src/index.js",
   "bin": {
