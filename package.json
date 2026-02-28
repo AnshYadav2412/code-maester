@@ -27,11 +27,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/yourname/code-check.git"
+    "url": "git+https://github.com/AnshYadav2412/code-maester.git"
   },
-  "homepage": "https://github.com/yourname/code-check#readme",
+  "homepage": "https://github.com/AnshYadav2412/code-maester#readme",
   "bugs": {
-    "url": "https://github.com/yourname/code-check/issues"
+    "url": "https://github.com/AnshYadav2412/code-maester/issues"
   },
   "engines": {
     "node": ">=16.0.0"
