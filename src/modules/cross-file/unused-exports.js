@@ -25,7 +25,7 @@ function extractExports(code, language) {
       });
 
       // Walk the AST to find exports
-      function walk(node) {
+      const walk = (node) => {
         if (!node || typeof node !== "object") return;
 
         // export function foo() {}
@@ -92,7 +92,7 @@ function extractExports(code, language) {
             walk(child);
           }
         }
-      }
+      };
 
       walk(ast);
     } catch (err) {
@@ -199,7 +199,7 @@ function extractImports(code, language) {
         sourceType: "module",
       });
 
-      function walk(node) {
+      const walk = (node) => {
         if (!node || typeof node !== "object") return;
 
         // import { foo, bar } from './module'
@@ -244,7 +244,7 @@ function extractImports(code, language) {
             walk(child);
           }
         }
-      }
+      };
 
       walk(ast);
     } catch (err) {
@@ -327,7 +327,7 @@ function extractImportsPython(code) {
  * @param {object} options
  * @returns {Promise<Array>}
  */
-async function detect(files, options = {}) {
+async function detect(files) {
   const issues = [];
   const allExports = new Map(); // Map<exportName, Array<{file, line, type}>>
   const allImports = new Set(); // Set of all imported names across all files

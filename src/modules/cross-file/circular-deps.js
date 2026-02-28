@@ -25,7 +25,7 @@ function extractDependencies(code, language, filePath) {
         sourceType: "module",
       });
 
-      function walk(node) {
+      const walk = (node) => {
         if (!node || typeof node !== "object") return;
 
         // import ... from 'module'
@@ -61,7 +61,7 @@ function extractDependencies(code, language, filePath) {
             walk(child);
           }
         }
-      }
+      };
 
       walk(ast);
     } catch (err) {
@@ -230,7 +230,7 @@ function detectCycles(graph) {
  * @param {object} options
  * @returns {Promise<Array>}
  */
-async function detect(files, options = {}) {
+async function detect(files) {
   const issues = [];
 
   // Build dependency graph
@@ -261,7 +261,6 @@ async function detect(files, options = {}) {
 
     // Report the issue on the first file in the cycle
     const firstFile = cycle[0];
-    const fileObj = files.find((f) => path.normalize(f.path) === firstFile);
 
     issues.push({
       type: "structural",
