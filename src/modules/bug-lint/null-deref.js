@@ -23,25 +23,33 @@ function detect(code) {
   });
 
   // Pass 2 — find unguarded dereferences
+  const reported = new Set(); // avoid duplicate issues for same var
   lines.forEach((line, i) => {
-    // ← matchAll instead of match — catches ALL dereferences on the line
     const matches = [...line.matchAll(/(\w+)\.([\w]+)/g)];
     if (matches.length === 0) return;
 
     for (const match of matches) {
       const varName = match[1];
-      if (!riskyVars.has(varName)) continue; // ← skip non-risky vars
+      if (!riskyVars.has(varName)) continue;
+      if (reported.has(`${varName}:${i}`)) continue;
 
-      const context = lines.slice(Math.max(0, i - 3), i).join("\n");
+      // Context includes current line AND 3 lines above (catches inline guards)
+      const context = lines.slice(Math.max(0, i - 3), i + 1).join("\n");
       const hasNullCheck =
         context.includes(`if (${varName})`) ||
+        context.includes(`if(${varName})`) ||
         context.includes(`if (${varName} !==`) ||
         context.includes(`if (${varName} !=`) ||
+        context.includes(`if(${varName} !==`) ||
+        context.includes(`if(${varName} !=`) ||
         context.includes(`${varName}?.`) ||
-        context.includes(`${varName} &&`) ||
-        new RegExp(`\\b${varName}\\s*&&`).test(context);
+        new RegExp(`\\b${varName}\\s*&&`).test(context) ||
+        new RegExp(`&&\\s*${varName}`).test(context) ||
+        new RegExp(`${varName}\\s*!==\\s*(null|undefined)`).test(context) ||
+        new RegExp(`${varName}\\s*!=\\s*(null|undefined)`).test(context);
 
       if (!hasNullCheck) {
+        reported.add(`${varName}:${i}`);
         issues.push({
           type: "bug",
           severity: "error",

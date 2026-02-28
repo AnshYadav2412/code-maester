@@ -22,12 +22,12 @@ const RULES = [
     severity: "warning",
   },
   {
-    // Functions should be camelCase
+    // Functions should be camelCase (PascalCase is for classes only)
     pattern: /function\s+([a-zA-Z_$][a-zA-Z0-9_$]*)\s*\(/,
     rule: "camel-case-function",
-    check: (name) => !isCamelCase(name) && !isPascalCase(name),
+    check: (name) => !isCamelCase(name),
     message: (name) =>
-      `Function '${name}' should use camelCase naming convention.`,
+      `Function '${name}' should use camelCase naming convention (PascalCase is reserved for classes).`,
     suggestion: (name) => `Rename '${name}' to '${toCamelCase(name)}'`,
     severity: "warning",
   },
