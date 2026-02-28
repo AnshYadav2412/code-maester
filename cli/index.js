@@ -17,9 +17,20 @@
  */
 
 const path = require("path");
-const chokidar = require("chokidar");
-const WebSocket = require("ws");
 const codeCheck = require("../src/index.js");
+
+/**
+ * Require an optional CLI dependency. Prints a helpful install message if missing.
+ */
+function requireOptional(pkg) {
+    try {
+        return require(pkg);
+    } catch {
+        err(`Optional dependency '${pkg}' is not installed.`);
+        err(`Run: ${c("cyan", `npm install ${pkg}`)} to use this feature.`);
+        process.exit(1);
+    }
+}
 
 // ── ANSI colour helpers ────────────────────────────────────────────────────────
 const C = {
@@ -174,6 +185,7 @@ class BackendWS {
 
     connect() {
         return new Promise((resolve) => {
+            const WebSocket = requireOptional("ws");
             info(`Connecting to backend ${c("cyan", this.url)} …`);
             this.ws = new WebSocket(this.url);
 
@@ -212,7 +224,7 @@ class BackendWS {
 
     send(payload) {
         const raw = JSON.stringify(payload);
-        if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+        if (this.ws && this.ws.readyState === 1 /* WebSocket.OPEN */) {
             this.ws.send(raw);
         } else {
             this._queue.push(raw);
@@ -249,7 +261,7 @@ async function runOnce(pattern, opts) {
 // ── Project analysis ──────────────────────────────────────────────────────────
 
 async function runProject(patterns, opts) {
-    const glob = require("glob");
+    const { glob } = requireOptional("glob");
     const fs = require("fs").promises;
 
     if (!opts.json) {
@@ -259,7 +271,7 @@ async function runProject(patterns, opts) {
     // Expand all patterns to file paths
     let allFiles = [];
     for (const pattern of patterns) {
-        const files = glob.sync(pattern, { nodir: true });
+        const files = await glob(pattern, { nodir: true });
         allFiles = allFiles.concat(files);
     }
 
@@ -382,6 +394,7 @@ async function runWatch(pattern, opts) {
     backend.send({ type: "cli:watch:start", pattern: absPattern });
 
     // Start chokidar watcher
+    const chokidar = requireOptional("chokidar");
     const watcher = chokidar.watch(pattern, {
         persistent: true,
         ignoreInitial: true,
