@@ -1,0 +1,59 @@
+{
+  "name": "code-maester",
+  "version": "1.0.0",
+  "description": "Automated code quality analysis — bug detection, security scanning, complexity metrics, and auto-formatting for JS, Python, Java, and C/C++",
+  "main": "src/index.js",
+  "bin": {
+    "code-maester": "cli/index.js"
+  },
+  "scripts": {
+    "dev": "nodemon src/index.js",
+    "test": "jest --coverage --passWithNoTests",
+    "lint": "eslint src/",
+    "demo": "vite demo/",
+    "prepublishOnly": "npm test && npm run lint"
+  },
+  "keywords": [
+    "code-review",
+    "static-analysis",
+    "linter",
+    "security",
+    "complexity",
+    "code-quality",
+    "eslint",
+    "ast"
+  ],
+  "author": "ansh_yadav",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yourname/code-check.git"
+  },
+  "homepage": "https://github.com/yourname/code-check#readme",
+  "bugs": {
+    "url": "https://github.com/yourname/code-check/issues"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "files": [
+    "src/",
+    "cli/",
+    "README.md",
+    "LICENSE"
+  ],
+  "dependencies": {
+    "acorn": "^8.11.0",
+    "axios": "^1.6.0",
+    "chokidar": "^3.6.0",
+    "diff": "^5.2.2",
+    "eslint": "^8.57.0",
+    "express": "^5.2.1",
+    "prettier": "^3.8.1",
+    "ws": "^8.16.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "vite": "^7.3.1"
+  }
+}

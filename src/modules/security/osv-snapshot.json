@@ -1,0 +1,81 @@
+{
+  "metadata": {
+    "generated": "2025-01-01",
+    "source": "https://osv.dev",
+    "note": "Offline fallback snapshot — used when OSV API is unreachable"
+  },
+  "vulnerabilities": [
+    {
+      "package": "lodash",
+      "ecosystem": "npm",
+      "vulnerableVersions": ["<4.17.21"],
+      "id": "GHSA-35jh-r3h4-6jhm",
+      "severity": "high",
+      "summary": "Prototype pollution via lodash.merge, lodash.set, lodash.setWith",
+      "remediation": "Upgrade to lodash >= 4.17.21"
+    },
+    {
+      "package": "axios",
+      "ecosystem": "npm",
+      "vulnerableVersions": ["<1.6.0"],
+      "id": "GHSA-wf5p-g6vw-rhxx",
+      "severity": "medium",
+      "summary": "Axios CSRF vulnerability — credential leakage on cross-origin redirect",
+      "remediation": "Upgrade to axios >= 1.6.0"
+    },
+    {
+      "package": "express",
+      "ecosystem": "npm",
+      "vulnerableVersions": ["<4.19.2"],
+      "id": "GHSA-rv95-896h-c2vc",
+      "severity": "medium",
+      "summary": "Express open redirect vulnerability via malformed URLs",
+      "remediation": "Upgrade to express >= 4.19.2"
+    },
+    {
+      "package": "jsonwebtoken",
+      "ecosystem": "npm",
+      "vulnerableVersions": ["<9.0.0"],
+      "id": "GHSA-hjrf-2m68-5959",
+      "severity": "high",
+      "summary": "jsonwebtoken allows algorithm confusion attacks",
+      "remediation": "Upgrade to jsonwebtoken >= 9.0.0"
+    },
+    {
+      "package": "minimist",
+      "ecosystem": "npm",
+      "vulnerableVersions": ["<1.2.6"],
+      "id": "GHSA-xvch-5gv4-984h",
+      "severity": "critical",
+      "summary": "Prototype pollution in minimist argument parser",
+      "remediation": "Upgrade to minimist >= 1.2.6"
+    },
+    {
+      "package": "node-fetch",
+      "ecosystem": "npm",
+      "vulnerableVersions": ["<2.6.7", "<3.1.1"],
+      "id": "GHSA-r683-j2x4-v87g",
+      "severity": "high",
+      "summary": "node-fetch forwards sensitive headers to third-party redirects",
+      "remediation": "Upgrade to node-fetch >= 2.6.7 or >= 3.1.1"
+    },
+    {
+      "package": "moment",
+      "ecosystem": "npm",
+      "vulnerableVersions": ["<2.29.4"],
+      "id": "GHSA-wc69-rhjr-hc9g",
+      "severity": "high",
+      "summary": "Moment.js path traversal vulnerability in locale loading",
+      "remediation": "Upgrade to moment >= 2.29.4 or migrate to date-fns / dayjs"
+    },
+    {
+      "package": "qs",
+      "ecosystem": "npm",
+      "vulnerableVersions": ["<6.10.3"],
+      "id": "GHSA-hrpp-h998-j3pp",
+      "severity": "high",
+      "summary": "Prototype pollution via qs query string parser",
+      "remediation": "Upgrade to qs >= 6.10.3"
+    }
+  ]
+}
