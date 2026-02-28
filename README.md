@@ -22,10 +22,11 @@
 ### Advanced Features
 
 - 🔍 **Cross-File Analysis**: Detect unused exports and circular dependencies across your entire project
-- 🔄 **Watch Mode**: Real-time analysis with file watching and WebSocket updates
+- ⚡ **Watch Mode with WebSocket**: Real-time analysis on file save with instant browser updates (no refresh required!)
 - 🔌 **Plugin System**: Extend with custom rules and analyzers
 - 📊 **Detailed Reports**: Comprehensive JSON reports with suggestions and remediation steps
 - 🎯 **Language Detection**: Automatic language detection from file extensions and code patterns
+- 🌐 **Web Dashboard**: Full-featured UI with live updates, AI fixes, and visual reports
 
 ---
 
@@ -37,6 +38,8 @@
 - [Live Demo](#live-demo)
 - [API Reference](#api-reference)
 - [CLI Usage](#cli-usage)
+- [WebSocket Architecture (Watch Mode)](#websocket-architecture-watch-mode)
+- [Cross-File Analysis](#cross-file-analysis)
 - [Supported Languages](#supported-languages)
 - [Scoring](#scoring)
 - [Plugin System](#plugin-system)
@@ -129,7 +132,7 @@ node cli/index.js --project "examples/cross-file-demo/*.js"
 
 ### Option 2: Full Web Dashboard
 
-The **Code Reviewer** web app provides a real-time dashboard with visual reports, AI-powered fixes, and live code formatting.
+The **Code Maester** web app provides a real-time dashboard with visual reports, AI-powered fixes, and live code formatting.
 
 ```bash
 # 1. Start the backend (uses code-maester under the hood)
@@ -148,7 +151,31 @@ Open **http://localhost:5173** in your browser to:
 - View detailed issue breakdowns with severity levels
 - Get AI-generated fix suggestions
 - See formatted code with side-by-side diffs
-- Watch files for real-time analysis updates
+- **Watch files for real-time analysis updates (no refresh required!)**
+
+### Option 3: Watch Mode Demo
+
+Experience real-time analysis with WebSocket updates:
+
+```bash
+# Terminal 1: Start backend
+cd code-reviewer/backend
+npm start
+
+# Terminal 2: Start frontend
+cd code-reviewer/frontend
+npm run dev
+
+# Terminal 3: Start watch mode
+cd code-maester
+code-maester "examples/cross-file-demo/*.js" --watch
+```
+
+Now:
+1. Open http://localhost:5173 and go to "Watch Mode"
+2. Edit any file in `examples/cross-file-demo/`
+3. Save the file
+4. See the dashboard update instantly without refresh! ⚡
 
 ---
 
@@ -331,23 +358,80 @@ node cli/index.js src/app.js
   Bugs: 2  Security: 1  Lint: 3  Complexity: 1
 ```
 
-#### 2. Watch Mode (Live Analysis)
+#### 2. Watch Mode (Live Analysis with WebSocket)
+
+Watch mode automatically re-runs analysis on every file save and pushes updated results to the web dashboard via WebSockets in real-time, with no manual refresh required.
 
 ```bash
-# Watch a file for changes
+# Watch a single file
 code-maester src/app.js --watch
 
 # Watch multiple files with glob pattern
 code-maester "src/**/*.js" --watch
 
-# Connect to custom backend
+# Watch TypeScript files
+code-maester "src/**/*.ts" --watch
+
+# Connect to custom backend WebSocket
 code-maester src/app.js --watch --server ws://localhost:3001/ws
 ```
 
+**How It Works:**
+
+1. **File Watching**: Uses `chokidar` to monitor file changes
+2. **Auto-Analysis**: Runs analysis automatically on every save
+3. **WebSocket Push**: Sends results to backend via WebSocket
+4. **Live Updates**: Browser dashboard updates instantly without refresh
+
+**Terminal Output:**
+```
+code-maester — Watch Mode
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[2:30:15 pm] ℹ Watching : src/**/*.js
+[2:30:15 pm] ℹ Backend  : ws://localhost:3001/ws
+[2:30:15 pm] ✔ Connected to backend WebSocket
+[2:30:15 pm] ✔ Watcher ready — waiting for file changes…
+
+[2:30:42 pm] ◎ File changed: src/app.js
+[2:30:42 pm]   Score: 85.2  Grade: B  Bugs: 2  Security: 1  Lint: 3
+[2:30:42 pm] ✔ Result pushed to backend ✅
+```
+
+**Web Dashboard Integration:**
+
+The watch mode integrates seamlessly with the web dashboard:
+
+1. Start the backend server:
+   ```bash
+   cd code-reviewer/backend
+   npm start
+   ```
+
+2. Start the frontend:
+   ```bash
+   cd code-reviewer/frontend
+   npm run dev
+   ```
+
+3. Open http://localhost:5173 and navigate to "Watch Mode"
+
+4. Start watching from CLI:
+   ```bash
+   code-maester "src/**/*.js" --watch
+   ```
+
+5. Edit and save any watched file - the dashboard updates instantly!
+
 **Features:**
-- Automatically re-analyzes on file save
-- Pushes results to backend WebSocket
-- Updates browser dashboard in real-time
+- ✅ Automatic re-analysis on file save
+- ✅ Real-time WebSocket updates
+- ✅ No manual refresh required
+- ✅ Live terminal log in browser
+- ✅ Shows analysis progress
+- ✅ Displays score, grade, and issues
+- ✅ Works with multiple file patterns
+- ✅ Graceful error handling
+- ✅ Connection status indicator
 - Shows brief summary in terminal
 
 #### 3. Project-Level Analysis (Cross-File)
@@ -496,6 +580,123 @@ fi
 
 echo "✅ Code quality check passed"
 ```
+
+---
+
+## WebSocket Architecture (Watch Mode)
+
+The watch mode uses WebSockets to enable real-time communication between the CLI, backend, and browser dashboard.
+
+### Architecture Flow
+
+```
+┌─────────────┐         ┌─────────────┐         ┌─────────────┐
+│   CLI       │         │   Backend   │         │   Browser   │
+│  (Watcher)  │◄───────►│  WebSocket  │◄───────►│  Dashboard  │
+└─────────────┘         └─────────────┘         └─────────────┘
+      │                       │                       │
+      │ 1. File changed       │                       │
+      │──────────────────────►│                       │
+      │                       │                       │
+      │ 2. Analyze file       │                       │
+      │                       │                       │
+      │ 3. Send result        │                       │
+      │──────────────────────►│                       │
+      │                       │ 4. Broadcast result   │
+      │                       │──────────────────────►│
+      │                       │                       │
+      │                       │                       │ 5. Update UI
+      │                       │                       │    (no refresh!)
+```
+
+### Message Types
+
+**CLI → Backend:**
+- `cli:watch:start` - CLI started watching a pattern
+- `cli:analyzing` - File change detected, analysis starting
+- `cli:result` - Analysis complete, here's the report
+- `cli:error` - Analysis failed
+- `cli:watch:stop` - CLI stopped watching
+
+**Backend → Browser:**
+- `watch:started` - Watch mode activated
+- `watch:analyzing` - File being analyzed
+- `watch:result` - New analysis results available
+- `watch:error` - Analysis error occurred
+- `watch:stopped` - Watch mode deactivated
+
+### WebSocket Connection
+
+**Default URL:** `ws://localhost:3001/ws`
+
+**Custom URL:**
+```bash
+code-maester "src/**/*.js" --watch --server ws://my-server:3001/ws
+```
+
+### Backend Setup
+
+The backend WebSocket server is included in the `code-reviewer/backend` package:
+
+```javascript
+// Automatically starts with the backend server
+// Listens on ws://localhost:3001/ws
+// Handles message routing between CLI and browser clients
+```
+
+### Frontend Integration
+
+The frontend uses the `useWatchSocket` hook to manage WebSocket connections:
+
+```javascript
+import { useWatchSocket } from '../hooks/useWatchSocket';
+
+function WatchMode() {
+  const {
+    connected,
+    liveReport,
+    events,
+    connect,
+    disconnect,
+  } = useWatchSocket();
+
+  // Connect to WebSocket
+  useEffect(() => {
+    connect();
+    return () => disconnect();
+  }, []);
+
+  // liveReport updates automatically when CLI sends results
+  return <div>{liveReport && <Report data={liveReport} />}</div>;
+}
+```
+
+### Features
+
+- ✅ **Real-time Updates**: No polling, instant updates via WebSocket
+- ✅ **Automatic Reconnection**: Handles connection drops gracefully
+- ✅ **Multiple Clients**: Supports multiple browser tabs simultaneously
+- ✅ **Event Log**: Shows all watch events in real-time
+- ✅ **Connection Status**: Visual indicator of WebSocket state
+- ✅ **Offline Mode**: CLI works without backend connection
+
+### Troubleshooting
+
+**"WebSocket error — is the backend running?"**
+- Start the backend: `cd code-reviewer/backend && npm start`
+- Check backend is on port 3001
+- Verify WebSocket URL in CLI command
+
+**"Connection timeout"**
+- Backend may be starting up (wait 3 seconds)
+- Check firewall settings
+- Verify no other service is using port 3001
+
+**"Results not updating in browser"**
+- Check browser console for WebSocket errors
+- Verify you're on the Watch Mode page
+- Refresh the page and reconnect
+- Check CLI is sending results (look for "✅" in terminal)
 
 ---
 

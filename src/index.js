@@ -1,6 +1,6 @@
 "use strict";
 /**
- * index.js — Public API entry point for code-check
+ * index.js — Public API entry point for code-maester
  * 
  * Implements: analyze, analyzeFile, diff, config, use, version, help, supportedLanguages
  */
@@ -85,7 +85,7 @@ function runPlugins(code, language, ast = null) {
         else extra.lint.push(issue);
       }
     } catch (err) {
-      console.warn(`[code-check] Plugin '${plugin.name}' threw: ${err.message}`);
+      console.warn(`[code-maester] Plugin '${plugin.name}' threw: ${err.message}`);
     }
   }
   return extra;
@@ -314,7 +314,7 @@ function use(plugin) {
     throw new Error("Plugin must have a `name` (string) and a `run(code, ast)` function.");
   }
   plugins.push(plugin);
-  console.log(`[code-check] Plugin registered: ${plugin.name}`);
+  console.log(`[code-maester] Plugin registered: ${plugin.name}`);
 }
 
 // ─── Info Utilities ───────────────────────────────────────────────────────────
@@ -325,7 +325,7 @@ function version() {
 
 function help() {
   const usage = `
-  code-check — Automated Code Quality Analyser
+  code-maester — Automated Code Quality Analyser
   ─────────────────────────────────────────────
 
   API:

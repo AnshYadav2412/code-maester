@@ -2,14 +2,14 @@
 /**
  * plugins/no-console.js
  * ─────────────────────
- * Example plugin for code-check.
+ * Example plugin for code-maester.
  *
  * Detects `console.log`, `console.warn`, `console.error`, and `console.debug`
  * calls left in production code and reports them as lint warnings.
  *
  * Usage:
- *   const reviewer = require('code-check');
- *   const noConsole = require('code-check/src/plugins/no-console');
+ *   const reviewer = require('code-maester');
+ *   const noConsole = require('code-maester/src/plugins/no-console');
  *   reviewer.use(noConsole);
  *
  * Options: (pass via plugin.options before registering)

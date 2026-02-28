@@ -2,12 +2,12 @@
 "use strict";
 
 /**
- * code-check CLI
+ * code-maester CLI
  * --------------
  * Usage:
- *   code-check <file|glob>                      — one-shot analysis
- *   code-check <file|glob> --watch              — watch mode (live reload)
- *   code-check <file|glob> --watch --server URL — custom backend WS URL
+ *   code-maester <file|glob>                      — one-shot analysis
+ *   code-maester <file|glob> --watch              — watch mode (live reload)
+ *   code-maester <file|glob> --watch --server URL — custom backend WS URL
  *
  * Watch mode:
  *   1. Watches the given file/glob with chokidar
@@ -117,7 +117,7 @@ function printReport(report, filePath) {
     const divider = c("dim", "─".repeat(60));
 
     console.log(`\n${divider}`);
-    console.log(`  ${bold("code-check")} ${dim("—")} ${c("cyan", path.basename(filePath || "code"))}`);
+    console.log(`  ${bold("code-maester")} ${dim("—")} ${c("cyan", path.basename(filePath || "code"))}`);
     console.log(divider);
 
     // Score + grade
@@ -316,7 +316,7 @@ function printProjectReport(report) {
     const divider = c("dim", "─".repeat(60));
 
     console.log(`\n${divider}`);
-    console.log(`  ${bold("code-check")} ${dim("—")} ${bold(c("cyan", "Project Analysis"))}`);
+    console.log(`  ${bold("code-maester")} ${dim("—")} ${bold(c("cyan", "Project Analysis"))}`);
     console.log(divider);
 
     console.log(`  Files Analyzed: ${c("cyan", projectAnalysis.filesAnalyzed)}`);
@@ -380,7 +380,7 @@ function printProjectReport(report) {
 async function runWatch(pattern, opts) {
     const absPattern = path.resolve(pattern);
 
-    console.log(`\n${bold(c("cyan", "code-check"))} ${c("green", "—")} ${bold("Watch Mode")}`);
+    console.log(`\n${bold(c("cyan", "code-maester"))} ${c("green", "—")} ${bold("Watch Mode")}`);
     console.log(dim("━".repeat(60)));
     info(`Watching : ${c("cyan", pattern)}`);
     info(`Backend  : ${c("cyan", opts.server)}`);
@@ -458,14 +458,14 @@ async function runWatch(pattern, opts) {
 
 function printHelp() {
     console.log(`
-  ${bold(c("cyan", "code-check"))} — Automated Code Quality Analyser
+  ${bold(c("cyan", "code-maester"))} — Automated Code Quality Analyser
   ${dim("─".repeat(50))}
 
   ${bold("Usage:")}
-    code-check <file>                 Analyse a file (one-shot)
-    code-check <glob> --watch         Watch files for changes
-    code-check <file> --json          Output report as JSON
-    code-check --project <patterns>   Analyse multiple files for cross-file issues
+    code-maester <file>                 Analyse a file (one-shot)
+    code-maester <glob> --watch         Watch files for changes
+    code-maester <file> --json          Output report as JSON
+    code-maester --project <patterns>   Analyse multiple files for cross-file issues
 
   ${bold("Options:")}
     --watch,   -w          Enable watch mode
@@ -477,11 +477,11 @@ function printHelp() {
     --help,    -h          Show this help
 
   ${bold("Examples:")}
-    code-check src/auth.js
-    code-check "src/**/*.js" --watch
-    code-check src/api.ts --watch --server ws://my-server:3001/ws
-    code-check src/index.js --json
-    code-check --project "src/**/*.js" "lib/**/*.js"
+    code-maester src/auth.js
+    code-maester "src/**/*.js" --watch
+    code-maester src/api.ts --watch --server ws://my-server:3001/ws
+    code-maester src/index.js --json
+    code-maester --project "src/**/*.js" "lib/**/*.js"
 
   ${bold("Watch mode flow:")}
     file save → local analysis → push to backend WS → browser updates live
