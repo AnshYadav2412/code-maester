@@ -131,7 +131,7 @@ function printReport(report, filePath) {
     const bugCount = (report.bugs || []).length;
     const secCount = (report.security || []).length;
     const lintCount = (report.lint || []).length;
-    const cplxCount = (report.complexity || []).length;
+    const cplxCount = report.complexity?.functions?.length || 0;
 
     console.log(
         `  Bugs: ${c(bugCount ? "red" : "green", bugCount)}  ` +
@@ -160,7 +160,17 @@ function printReport(report, filePath) {
     printIssues("Bugs", report.bugs, "red");
     printIssues("Security", report.security, "purple");
     printIssues("Lint", report.lint, "yellow");
-    printIssues("Complexity", report.complexity, "orange");
+    
+    // Complexity is an object with functions array, extract issues from it
+    const complexityIssues = [];
+    if (report.complexity?.functions) {
+        report.complexity.functions.forEach(fn => {
+            if (fn.issues && fn.issues.length > 0) {
+                complexityIssues.push(...fn.issues);
+            }
+        });
+    }
+    printIssues("Complexity", complexityIssues, "orange");
 
     // Suggestions
     if (report.suggestions && report.suggestions.length > 0) {

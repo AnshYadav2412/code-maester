@@ -62,20 +62,24 @@ npm install code-maester
 ```bash
 npm install -g code-maester
 
-# Now you can use it anywhere
+# Now you can use it anywhere on your own projects
 code-maester src/app.js
 code-maester --project "src/**/*.js"
+code-maester "src/**/*.js" --watch
 ```
 
-### From Source
+**Important:** The `examples/` folder is only available in the Git repository, not in the npm package. After global installation, use the CLI on your own project files.
+
+### From Source (For Development/Testing)
 
 ```bash
 git clone https://github.com/AnshYadav2412/code-maester.git
 cd code-maester
 npm install
 
-# Use the CLI locally
+# Use the CLI locally (includes examples)
 node cli/index.js src/app.js
+node cli/index.js "examples/cross-file-demo/*.js" --watch
 ```
 
 > Requires Node.js **>= 16.0.0**
@@ -83,6 +87,26 @@ node cli/index.js src/app.js
 ---
 
 ## Quick Start
+
+### After Global Installation
+
+Once you've installed globally with `npm install -g code-maester`, you can analyze your own project files:
+
+```bash
+# Analyze a single file
+code-maester src/index.js
+
+# Analyze with JSON output
+code-maester src/index.js --json
+
+# Watch mode (auto-analyze on save)
+code-maester "src/**/*.js" --watch
+
+# Project analysis (cross-file issues)
+code-maester --project "src/**/*.js"
+```
+
+### Using as a Package
 
 ```js
 const codeCheck = require('code-maester');
@@ -115,6 +139,8 @@ Try the **interactive demo** to see code-maester in action:
 
 ### Option 1: Quick CLI Demo
 
+**Note:** This requires cloning the repository to access the example files.
+
 ```bash
 # Clone the repository
 git clone https://github.com/AnshYadav2412/code-maester.git
@@ -126,7 +152,7 @@ npm install
 # Run the cross-file analysis demo
 node test-cross-file.js
 
-# Or use the CLI directly
+# Or use the CLI directly on examples
 node cli/index.js --project "examples/cross-file-demo/*.js"
 ```
 
@@ -155,20 +181,23 @@ Open **http://localhost:5173** in your browser to:
 
 ### Option 3: Watch Mode Demo
 
-Experience real-time analysis with WebSocket updates:
+**Note:** This requires cloning the repository and running the backend/frontend.
 
 ```bash
 # Terminal 1: Start backend
 cd code-reviewer/backend
+npm install
 npm start
 
 # Terminal 2: Start frontend
 cd code-reviewer/frontend
+npm install
 npm run dev
 
-# Terminal 3: Start watch mode
+# Terminal 3: Start watch mode (from repo root)
 cd code-maester
-code-maester "examples/cross-file-demo/*.js" --watch
+npm install
+node cli/index.js "examples/cross-file-demo/*.js" --watch
 ```
 
 Now:
