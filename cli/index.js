@@ -69,6 +69,8 @@ function parseArgs(argv) {
         help: false,
         version: false,
         json: false,
+        project: false,
+        patterns: [],
     };
 
     for (let i = 0; i < args.length; i++) {
@@ -79,12 +81,15 @@ function parseArgs(argv) {
             opts.server = args[++i];
         } else if (arg === "--json") {
             opts.json = true;
+        } else if (arg === "--project" || arg === "-p") {
+            opts.project = true;
         } else if (arg === "--version" || arg === "-v") {
             opts.version = true;
         } else if (arg === "--help" || arg === "-h") {
             opts.help = true;
         } else if (!arg.startsWith("-")) {
-            opts.pattern = arg;
+            if (!opts.pattern) opts.pattern = arg;
+            opts.patterns.push(arg);
         }
     }
 
@@ -241,6 +246,123 @@ async function runOnce(pattern, opts) {
     }
 }
 
+// ── Project analysis ──────────────────────────────────────────────────────────
+
+async function runProject(patterns, opts) {
+    const glob = require("glob");
+    const fs = require("fs").promises;
+
+    if (!opts.json) {
+        info(`Running project-level analysis…`);
+    }
+
+    // Expand all patterns to file paths
+    let allFiles = [];
+    for (const pattern of patterns) {
+        const files = glob.sync(pattern, { nodir: true });
+        allFiles = allFiles.concat(files);
+    }
+
+    // Remove duplicates
+    allFiles = [...new Set(allFiles)];
+
+    if (allFiles.length === 0) {
+        if (!opts.json) {
+            err("No files found matching the patterns");
+        }
+        process.exit(1);
+    }
+
+    if (!opts.json) {
+        info(`Found ${c("cyan", allFiles.length)} files to analyze`);
+    }
+
+    try {
+        const report = await codeCheck.analyzeProject(allFiles, opts);
+
+        if (opts.json) {
+            console.log(JSON.stringify(report, null, 2));
+        } else {
+            printProjectReport(report);
+        }
+
+        const exitCode = report.projectAnalysis.structural.filter(i => i.severity === "error").length > 0 ? 1 : 0;
+        process.exit(exitCode);
+    } catch (e) {
+        if (opts.json) {
+            console.error(JSON.stringify({ error: e.message }));
+        } else {
+            err(`Project analysis failed: ${e.message}`);
+            console.error(e.stack);
+        }
+        process.exit(1);
+    }
+}
+
+function printProjectReport(report) {
+    const { projectAnalysis } = report;
+    const divider = c("dim", "─".repeat(60));
+
+    console.log(`\n${divider}`);
+    console.log(`  ${bold("code-check")} ${dim("—")} ${bold(c("cyan", "Project Analysis"))}`);
+    console.log(divider);
+
+    console.log(`  Files Analyzed: ${c("cyan", projectAnalysis.filesAnalyzed)}`);
+    console.log(`  Total Issues: ${c(projectAnalysis.summary.totalIssues ? "yellow" : "green", projectAnalysis.summary.totalIssues)}`);
+    console.log(divider);
+
+    // Summary
+    console.log(`\n  ${bold("Summary:")}`);
+    console.log(`    Unused Exports: ${c(projectAnalysis.summary.unusedExports ? "yellow" : "green", projectAnalysis.summary.unusedExports)}`);
+    console.log(`    Circular Dependencies: ${c(projectAnalysis.summary.circularDependencies ? "red" : "green", projectAnalysis.summary.circularDependencies)}`);
+
+    // Structural issues
+    if (projectAnalysis.structural.length > 0) {
+        console.log(`\n  ${bold(c("orange", "Structural Issues:"))} (${projectAnalysis.structural.length})`);
+
+        // Group by rule
+        const byRule = {};
+        projectAnalysis.structural.forEach((issue) => {
+            if (!byRule[issue.rule]) byRule[issue.rule] = [];
+            byRule[issue.rule].push(issue);
+        });
+
+        // Print circular dependencies
+        if (byRule["circular-dependency"]) {
+            console.log(`\n    ${bold(c("red", "Circular Dependencies:"))} (${byRule["circular-dependency"].length})`);
+            byRule["circular-dependency"].forEach((issue, idx) => {
+                console.log(`      ${c("red", `${idx + 1}.`)} ${issue.message}`);
+                console.log(`         ${dim(issue.suggestion)}`);
+            });
+        }
+
+        // Print unused exports
+        if (byRule["unused-export"]) {
+            console.log(`\n    ${bold(c("yellow", "Unused Exports:"))} (${byRule["unused-export"].length})`);
+            const grouped = {};
+            byRule["unused-export"].forEach((issue) => {
+                const file = path.basename(issue.file);
+                if (!grouped[file]) grouped[file] = [];
+                grouped[file].push(issue);
+            });
+
+            Object.entries(grouped).forEach(([file, issues]) => {
+                console.log(`      ${c("cyan", file)}:`);
+                issues.slice(0, 5).forEach((issue) => {
+                    console.log(`        ${c("yellow", "•")} ${issue.exportName} ${dim("(line " + issue.line + ")")}`);
+                });
+                if (issues.length > 5) {
+                    console.log(`        ${dim(`… and ${issues.length - 5} more`)}`);
+                }
+            });
+        }
+    } else {
+        console.log(`\n  ${c("green", "✔")} No structural issues found!`);
+    }
+
+    console.log(`\n${divider}\n`);
+}
+
 // ── Watch mode ────────────────────────────────────────────────────────────────
 
 async function runWatch(pattern, opts) {
@@ -330,9 +452,11 @@ function printHelp() {
     code-check <file>                 Analyse a file (one-shot)
     code-check <glob> --watch         Watch files for changes
     code-check <file> --json          Output report as JSON
+    code-check --project <patterns>   Analyse multiple files for cross-file issues
 
   ${bold("Options:")}
     --watch,   -w          Enable watch mode
+    --project, -p          Enable project-level analysis (unused exports, circular deps)
     --server,  -s <url>    Backend WebSocket URL
                            (default: ws://localhost:3001/ws)
     --json                 Output raw JSON instead of formatted report
@@ -344,9 +468,13 @@ function printHelp() {
     code-check "src/**/*.js" --watch
     code-check src/api.ts --watch --server ws://my-server:3001/ws
     code-check src/index.js --json
+    code-check --project "src/**/*.js" "lib/**/*.js"
 
   ${bold("Watch mode flow:")}
     file save → local analysis → push to backend WS → browser updates live
+
+  ${bold("Project mode:")}
+    Detects unused exports and circular dependencies across all files
 `);
 }
 
@@ -360,12 +488,18 @@ async function main() {
         process.exit(0);
     }
 
-    if (opts.help || !opts.pattern) {
+    if (opts.help || (!opts.pattern && !opts.project)) {
         printHelp();
         process.exit(opts.help ? 0 : 1);
     }
 
-    if (opts.watch) {
+    if (opts.project) {
+        if (opts.patterns.length === 0) {
+            err("--project requires at least one file pattern");
+            process.exit(1);
+        }
+        await runProject(opts.patterns, opts);
+    } else if (opts.watch) {
         await runWatch(opts.pattern, opts);
     } else {
         await runOnce(opts.pattern, opts);

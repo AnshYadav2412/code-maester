@@ -87,6 +87,7 @@ code-check/
 - **Security Analysis**: SQL injection, XSS, hardcoded secrets, path traversal
 - **Complexity Analysis**: Cyclomatic complexity, nesting depth, function length
 - **Code Formatting**: Automatic formatting with diff generation
+- **Cross-File Analysis**: Unused exports detection, circular dependency detection
 - **Scoring System**: Comprehensive quality scoring with grades
 
 ## Usage
@@ -100,15 +101,57 @@ const result = await codeCheck.analyze(code, options);
 // Analyze file
 const result = await codeCheck.analyzeFile('path/to/file.js');
 
+// Analyze multiple files for cross-file issues
+const projectReport = await codeCheck.analyzeProject([
+  'src/moduleA.js',
+  'src/moduleB.js',
+  'src/moduleC.js'
+]);
+
 // Compare two versions
 const delta = await codeCheck.diff(oldCode, newCode);
+```
+
+### CLI Usage
+
+```bash
+# Analyze a single file
+code-maester src/index.js
+
+# Watch mode
+code-maester "src/**/*.js" --watch
+
+# Project-level analysis (unused exports, circular dependencies)
+code-maester --project "src/**/*.js" "lib/**/*.js"
+
+# JSON output
+code-maester src/index.js --json
 ```
 
 ## API
 
 - `analyze(code, options)` - Analyze raw code string
 - `analyzeFile(filePath, options)` - Analyze file on disk
+- `analyzeProject(filePaths, options)` - Analyze multiple files for cross-file issues
 - `diff(oldCode, newCode)` - Compare code versions
 - `config(options)` - Set global configuration
 - `use(plugin)` - Register custom plugins
 - `supportedLanguages()` - List supported languages
+
+## Cross-File Analysis
+
+The new cross-file analysis feature detects project-wide issues:
+
+### Unused Exports
+Identifies exports that are never imported across the entire project, helping you:
+- Remove dead code
+- Reduce bundle size
+- Improve maintainability
+
+### Circular Dependencies
+Detects circular dependencies between modules and reports them as high-severity issues:
+- Prevents initialization order problems
+- Improves code architecture
+- Makes dependencies easier to understand
+
+See [docs/CROSS_FILE_ANALYSIS.md](docs/CROSS_FILE_ANALYSIS.md) for detailed documentation and examples.

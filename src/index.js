@@ -17,6 +17,7 @@ const JavaAnalyzer = require("./analyzers/java");
 const { runComplexityChecks } = require("./modules/complexity");
 const securityModule = require("./modules/security");
 const formatterModule = require("./modules/formatter");
+const crossFileModule = require("./modules/cross-file");
 const { calculateScore, calculateDelta } = require("./scoring");
 
 // ─── Plugin Registry ──────────────────────────────────────────────────────────
@@ -183,6 +184,51 @@ async function analyzeFile(filePath, options = {}) {
 }
 
 /**
+ * Analyse multiple files for cross-file issues
+ * @param {Array<string>} filePaths - array of file paths
+ * @param {object} options - optional overrides
+ * @returns {Promise<object>} project-level report with structural issues
+ */
+async function analyzeProject(filePaths, options = {}) {
+  // Read all files
+  const files = await Promise.all(
+    filePaths.map(async (filePath) => {
+      const absolutePath = path.resolve(filePath);
+      const code = await fs.readFile(absolutePath, "utf-8");
+      const detection = detect(code, { filePath: absolutePath });
+      return {
+        path: absolutePath,
+        code,
+        language: detection.language,
+      };
+    })
+  );
+
+  // Run cross-file analysis
+  const { structural } = await crossFileModule.analyzeProject(files, options);
+
+  // Optionally run individual file analysis for each file
+  const fileReports = options.includeFileReports
+    ? await Promise.all(
+        filePaths.map((filePath) => analyzeFile(filePath, options))
+      )
+    : [];
+
+  return {
+    projectAnalysis: {
+      filesAnalyzed: files.length,
+      structural,
+      summary: {
+        unusedExports: structural.filter((i) => i.rule === "unused-export").length,
+        circularDependencies: structural.filter((i) => i.rule === "circular-dependency").length,
+        totalIssues: structural.length,
+      },
+    },
+    fileReports: options.includeFileReports ? fileReports : undefined,
+  };
+}
+
+/**
  * Diff two versions of code and return a quality delta.
  * Classifies every issue as introduced / resolved / unchanged.
  *
@@ -285,6 +331,7 @@ function help() {
   API:
     analyze(code, options?)         Analyse a raw code string
     analyzeFile(filePath, options?) Analyse a file on disk
+    analyzeProject(filePaths, opts) Analyse multiple files for cross-file issues
     diff(oldCode, newCode)          Compare two versions of code
     config(options)                 Set global config + scoring weights
     use(plugin)                     Register a custom rule plugin
@@ -314,6 +361,7 @@ function supportedLanguages() {
 module.exports = {
   analyze,
   analyzeFile,
+  analyzeProject,
   diff,
   config,
   use,
