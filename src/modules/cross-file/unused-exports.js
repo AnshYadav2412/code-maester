@@ -263,35 +263,38 @@ function extractImports(code, language) {
  */
 function extractImportsRegex(code) {
   const imports = new Set();
-  const lines = code.split("\n");
 
-  lines.forEach((line) => {
-    // import { foo, bar } from './module'
-    const namedMatch = line.match(/import\s*\{\s*([^}]+)\s*\}/);
-    if (namedMatch) {
-      const names = namedMatch[1].split(",").map((n) => n.trim().split(/\s+as\s+/).shift());
-      names.forEach((name) => imports.add(name));
-    }
+  // import { foo, bar } from './module' (handles multi-line)
+  const namedMatches = code.matchAll(/import\s*\{\s*([^}]+)\s*\}\s*from/gs);
+  for (const match of namedMatches) {
+    const names = match[1]
+      .split(",")
+      .map((n) => n.trim().split(/\s+as\s+/).shift())
+      .filter((n) => n); // Remove empty strings
+    names.forEach((name) => imports.add(name));
+  }
 
-    // import foo from './module'
-    const defaultMatch = line.match(/import\s+([a-zA-Z_$][a-zA-Z0-9_$]*)\s+from/);
-    if (defaultMatch) {
-      imports.add(defaultMatch[1]);
-    }
+  // import foo from './module'
+  const defaultMatches = code.matchAll(/import\s+([a-zA-Z_$][a-zA-Z0-9_$]*)\s+from/g);
+  for (const match of defaultMatches) {
+    imports.add(match[1]);
+  }
 
-    // const { foo, bar } = require('./module')
-    const requireMatch = line.match(/const\s*\{\s*([^}]+)\s*\}\s*=\s*require/);
-    if (requireMatch) {
-      const names = requireMatch[1].split(",").map((n) => n.trim().split(/\s*:\s*/).shift());
-      names.forEach((name) => imports.add(name));
-    }
+  // const { foo, bar } = require('./module')
+  const requireMatches = code.matchAll(/const\s*\{\s*([^}]+)\s*\}\s*=\s*require/gs);
+  for (const match of requireMatches) {
+    const names = match[1]
+      .split(",")
+      .map((n) => n.trim().split(/\s*:\s*/).shift())
+      .filter((n) => n); // Remove empty strings
+    names.forEach((name) => imports.add(name));
+  }
 
-    // const foo = require('./module')
-    const requireDefaultMatch = line.match(/const\s+([a-zA-Z_$][a-zA-Z0-9_$]*)\s*=\s*require/);
-    if (requireDefaultMatch) {
-      imports.add(requireDefaultMatch[1]);
-    }
-  });
+  // const foo = require('./module')
+  const requireDefaultMatches = code.matchAll(/const\s+([a-zA-Z_$][a-zA-Z0-9_$]*)\s*=\s*require/g);
+  for (const match of requireDefaultMatches) {
+    imports.add(match[1]);
+  }
 
   return imports;
 }

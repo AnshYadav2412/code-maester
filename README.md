@@ -826,13 +826,13 @@ Language is **auto-detected** from file extension or code patterns if not specif
 
 ## Scoring
 
-The quality score is computed on a **0–100 scale** using a weighted penalty formula:
+The quality score is computed on a **0–100 scale** using a weighted penalty formula with logarithmic scaling:
 
 ```
 Score = 100 − (wBug·Pbug + wSec·Psec + wCplx·Pcplx + wRed·Pred + wLint·Plint)
 ```
 
-**Default weights:**
+### Default Weights
 
 | Category | Weight |
 |---|---|
@@ -842,15 +842,74 @@ Score = 100 − (wBug·Pbug + wSec·Psec + wCplx·Pcplx + wRed·Pred + wLint·Pl
 | Redundancy | 0.10 |
 | Lint | 0.10 |
 
-**Grades:**
+### Logarithmic Penalty Scaling
 
-| Score | Grade |
-|---|---|
-| 90–100 | A |
-| 80–89 | B |
-| 70–79 | C |
-| 60–69 | D |
-| < 60 | F |
+Each category uses logarithmic scaling to provide better score distribution and prevent single issues from dominating the score:
+
+```
+Penalty = 100 × (1 - e^(-raw/factor))
+```
+
+**Scaling factors by category:**
+
+| Category | Factor | Example Impact |
+|---|---|---|
+| Bugs | 50 | 1 error ≈ 18%, 5 errors ≈ 63%, 10 errors ≈ 86% |
+| Security | 40 | 1 critical ≈ 47%, 2 critical ≈ 71%, 3 critical ≈ 85% |
+| Complexity | 30 | Progressive scaling for complex functions |
+| Redundancy | 35 | Balanced scaling for duplicates |
+| Lint | 60 | Less aggressive (10 warnings ≈ 39%) |
+
+**Benefits:**
+- Better differentiation between 1 issue and many issues
+- Prevents single critical issues from causing extreme scores
+- More intuitive score progression
+- Encourages fixing all issues, not just the first few
+
+### Grades
+
+| Score | Grade | Label |
+|---|---|---|
+| 95–100 | A+ | Excellent |
+| 90–94 | A | Very Good |
+| 85–89 | A- | Good |
+| 80–84 | B+ | Above Average |
+| 75–79 | B | Average |
+| 70–74 | B- | Below Average |
+| 65–69 | C+ | Fair |
+| 60–64 | C | Needs Work |
+| 55–59 | C- | Poor |
+| 50–54 | D | Very Poor |
+| 0–49 | F | Critical Issues |
+
+### Severity Weights
+
+Within each category, issues are weighted by severity:
+
+**Bugs:**
+- Error: 10 points
+- Warning: 5 points
+- Info: 1 point
+
+**Security:**
+- Critical: 25 points
+- High: 15 points
+- Medium: 8 points
+- Low: 3 points
+
+**Complexity:**
+- High complexity: 5 points
+- Deep nesting: 5 points
+- Long function: 5 points
+
+**Redundancy:**
+- Duplicate block: 8 points
+- Dead code: 5 points
+
+**Lint:**
+- Error: 5 points
+- Warning: 3 points
+- Info: 1 point
 
 ---
 
@@ -874,6 +933,128 @@ Plugins registered via `use()` run automatically inside `analyze()` and `analyze
 
 - **GitHub:** [AnshYadav2412/code-maester](https://github.com/AnshYadav2412/code-maester)
 - **Issues:** [github.com/AnshYadav2412/code-maester/issues](https://github.com/AnshYadav2412/code-maester/issues)
+
+---
+
+## Troubleshooting
+
+### False Positives in Cross-File Analysis
+
+**Problem:** Project analysis shows exports as unused when they're actually used.
+
+**Cause:** You're only analyzing some file extensions, missing imports in other files.
+
+**Example:**
+```bash
+# ❌ Wrong - only analyzes .js files
+code-maester --project "src/**/*.js"
+# Result: Shows hooks as unused because they're imported in .jsx files!
+```
+
+**Solution:** Include ALL file extensions in your project:
+```bash
+# ✅ Correct - analyzes both .js and .jsx
+code-maester --project "src/**/*.{js,jsx}"
+
+# ✅ For TypeScript React projects
+code-maester --project "src/**/*.{ts,tsx}"
+
+# ✅ For mixed projects
+code-maester --project "src/**/*.{js,jsx,ts,tsx}"
+```
+
+### Common Issues
+
+#### "ENOENT: no such file or directory"
+
+**Problem:** File not found at the specified path.
+
+**Solutions:**
+```bash
+# Check the actual filename and extension
+ls src/        # Linux/Mac
+dir src\       # Windows
+
+# Use correct extension
+code-maester src/App.jsx    # Not App.js
+code-maester src/index.ts   # Not index.js
+```
+
+#### "No files found matching the patterns"
+
+**Problem:** Glob pattern doesn't match any files.
+
+**Solutions:**
+```bash
+# ❌ Wrong - only matches files directly in src/
+code-maester --project "src/*.js"
+
+# ✅ Correct - recursive search with **
+code-maester --project "src/**/*.js"
+
+# ✅ Always use quotes around patterns
+code-maester --project "src/**/*.{js,jsx}"
+```
+
+#### "command not found: code-maester"
+
+**Problem:** Package not installed globally.
+
+**Solutions:**
+```bash
+# Install globally
+npm install -g code-maester
+
+# Or use npx (no installation needed)
+npx code-maester src/index.js
+
+# Or use local installation
+node node_modules/.bin/code-maester src/index.js
+```
+
+### File Extension Support
+
+| Extension | Language | Supported |
+|-----------|----------|-----------|
+| `.js` | JavaScript | ✅ |
+| `.jsx` | JavaScript (React) | ✅ |
+| `.mjs` | JavaScript (ES Module) | ✅ |
+| `.cjs` | JavaScript (CommonJS) | ✅ |
+| `.ts` | TypeScript | ✅ |
+| `.tsx` | TypeScript (React) | ✅ |
+| `.py` | Python | ✅ |
+| `.java` | Java | ✅ |
+| `.c` | C | ✅ |
+| `.cpp` | C++ | ✅ |
+
+### Best Practices
+
+**For React Projects:**
+```bash
+# Always include both .js and .jsx
+code-maester --project "src/**/*.{js,jsx}"
+code-maester "src/**/*.{js,jsx}" --watch
+```
+
+**For TypeScript React:**
+```bash
+# Include all TypeScript extensions
+code-maester --project "src/**/*.{ts,tsx}"
+```
+
+**For Mixed Projects:**
+```bash
+# Include everything
+code-maester --project "src/**/*.{js,jsx,ts,tsx}"
+```
+
+---
+
+## Repository
+
+- **GitHub:** [AnshYadav2412/code-maester](https://github.com/AnshYadav2412/code-maester)
+- **Issues:** [github.com/AnshYadav2412/code-maester/issues](https://github.com/AnshYadav2412/code-maester/issues)
+- **npm:** [npmjs.com/package/code-maester](https://www.npmjs.com/package/code-maester)
 
 ---
 

@@ -20,7 +20,8 @@ const DEFAULT_WEIGHTS = {
 
 /**
  * Bug penalty — weighted by severity.
- * error = 10pts, warning = 5pts, info = 1pt — capped at 100
+ * error = 10pts, warning = 5pts, info = 1pt
+ * Uses logarithmic scaling for better distribution
  *
  * @param {Array} bugs
  * @returns {number} 0-100
@@ -41,12 +42,21 @@ function calcBugPenalty(bugs) {
     }
   }, 0);
 
-  return Math.min(100, raw);
+  // Apply logarithmic scaling to prevent single issues from dominating
+  // and to better differentiate between 1 and many issues
+  if (raw === 0) return 0;
+  
+  // Formula: penalty = 100 * (1 - e^(-raw/50))
+  // This gives: 1 error = ~18%, 5 errors = ~63%, 10 errors = ~86%
+  const scaled = 100 * (1 - Math.exp(-raw / 50));
+  
+  return Math.min(100, Math.round(scaled));
 }
 
 /**
  * Security penalty — weighted heavily by severity.
- * critical = 25pts, high = 15pts, medium = 8pts, low = 3pts — capped at 100
+ * critical = 25pts, high = 15pts, medium = 8pts, low = 3pts
+ * Uses logarithmic scaling for better distribution
  *
  * @param {Array} security
  * @returns {number} 0-100
@@ -69,12 +79,19 @@ function calcSecurityPenalty(security) {
     }
   }, 0);
 
-  return Math.min(100, raw);
+  // Apply logarithmic scaling
+  // Formula: penalty = 100 * (1 - e^(-raw/40))
+  // This gives: 1 critical = ~47%, 2 critical = ~71%, 3 critical = ~85%
+  if (raw === 0) return 0;
+  
+  const scaled = 100 * (1 - Math.exp(-raw / 40));
+  
+  return Math.min(100, Math.round(scaled));
 }
 
 /**
  * Complexity penalty — based on function complexity scores
- * and nesting violations.
+ * and nesting violations. Uses logarithmic scaling.
  *
  * @param {object} complexity - { functions: [], nestingViolations: [], longFunctions: [] }
  * @returns {number} 0-100
@@ -85,6 +102,7 @@ function calcComplexityPenalty(complexity) {
   let penalty = 0;
 
   complexity.functions.forEach((fn) => {
+    if (!fn.issues) return;
     fn.issues.forEach((issue) => {
       switch (issue.type) {
         case "high_complexity":
@@ -102,11 +120,17 @@ function calcComplexityPenalty(complexity) {
     });
   });
 
-  return Math.min(100, penalty);
+  // Apply logarithmic scaling
+  if (penalty === 0) return 0;
+  
+  const scaled = 100 * (1 - Math.exp(-penalty / 30));
+  
+  return Math.min(100, Math.round(scaled));
 }
 
 /**
  * Redundancy penalty — duplicate blocks and dead code.
+ * Uses logarithmic scaling.
  *
  * @param {Array} redundancy
  * @returns {number} 0-100
@@ -125,12 +149,18 @@ function calcRedundancyPenalty(redundancy) {
     }
   }, 0);
 
-  return Math.min(100, raw);
+  // Apply logarithmic scaling
+  if (raw === 0) return 0;
+  
+  const scaled = 100 * (1 - Math.exp(-raw / 35));
+  
+  return Math.min(100, Math.round(scaled));
 }
 
 /**
  * Lint penalty — style and convention violations.
- * warning = 3pts, info = 1pt — capped at 100
+ * warning = 3pts, info = 1pt
+ * Uses logarithmic scaling.
  *
  * @param {Array} lint
  * @returns {number} 0-100
@@ -151,7 +181,12 @@ function calcLintPenalty(lint) {
     }
   }, 0);
 
-  return Math.min(100, raw);
+  // Apply logarithmic scaling (less aggressive for lint)
+  if (raw === 0) return 0;
+  
+  const scaled = 100 * (1 - Math.exp(-raw / 60));
+  
+  return Math.min(100, Math.round(scaled));
 }
 
 // ─── Main Scoring Function ────────────────────────────────────────────────────
