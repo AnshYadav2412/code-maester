@@ -44,21 +44,16 @@
   ],
   "dependencies": {
     "acorn": "^8.11.0",
+    "clang-format": "^1.8.0",
     "diff": "^8.0.0",
-    "eslint": "^8.57.0"
+    "eslint": "^8.57.0",
+    "prettier": "^3.2.5",
+    "prettier-plugin-java": "^2.6.4"
   },
   "optionalDependencies": {
     "chokidar": "^5.0.0",
     "glob": "^13.0.0",
     "ws": "^8.16.0"
-  },
-  "peerDependencies": {
-    "prettier": "^3.0.0"
-  },
-  "peerDependenciesMeta": {
-    "prettier": {
-      "optional": true
-    }
   },
   "devDependencies": {
     "jest": "^30.0.0",

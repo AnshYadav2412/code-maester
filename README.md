@@ -15,7 +15,7 @@
 - ✅ **Bug Detection**: Null dereference, off-by-one errors, unreachable code, unused variables
 - ✅ **Security Scanning**: SQL injection, XSS, hardcoded secrets, eval/exec usage, path traversal
 - ✅ **Complexity Metrics**: Cyclomatic complexity, nesting depth, function length
-- ✅ **Code Formatting**: Auto-format with Prettier integration and diff generation
+- ✅ **Code Formatting**: Powered by Prettier for JS/TS/JSON/CSS/HTML/Markdown/YAML/GraphQL, prettier-plugin-java for Java, and clang-format for C/C++
 - ✅ **Quality Scoring**: Weighted scoring system with letter grades (A-F)
 
 ### Advanced Features
@@ -40,6 +40,7 @@
 - [WebSocket Architecture (Watch Mode)](#websocket-architecture-watch-mode)
 - [Cross-File Analysis](#cross-file-analysis)
 - [Supported Languages](#supported-languages)
+- [Code Formatting](#code-formatting)
 - [Scoring](#scoring)
 - [Plugin System](#plugin-system)
 - [Configuration](#configuration)
@@ -821,6 +822,100 @@ code-maester --project "src/**/*.js" --json
 | C++ | `cpp` |
 
 Language is **auto-detected** from file extension or code patterns if not specified.
+
+---
+
+## Code Formatting
+
+Code Maester includes automatic code formatting powered by **Prettier**. The formatter is now a core dependency and works reliably across all supported languages.
+
+### Supported Formatting Languages
+
+| Language | Parser/Tool | Status |
+|---|---|---|
+| JavaScript | Prettier (`babel`) | ✅ Fully supported |
+| TypeScript | Prettier (`typescript`) | ✅ Fully supported |
+| JSX/React | Prettier (`babel`) | ✅ Fully supported |
+| TSX/React | Prettier (`typescript`) | ✅ Fully supported |
+| JSON | Prettier (`json`) | ✅ Fully supported |
+| CSS | Prettier (`css`) | ✅ Fully supported |
+| SCSS | Prettier (`scss`) | ✅ Fully supported |
+| HTML | Prettier (`html`) | ✅ Fully supported |
+| Markdown | Prettier (`markdown`) | ✅ Fully supported |
+| YAML | Prettier (`yaml`) | ✅ Fully supported |
+| GraphQL | Prettier (`graphql`) | ✅ Fully supported |
+| Java | prettier-plugin-java | ✅ Fully supported |
+| C | clang-format | ✅ Fully supported |
+| C++ | clang-format | ✅ Fully supported |
+| Python | - | ❌ Not supported (use Black or Ruff) |
+
+### Default Configuration
+
+```js
+{
+  semi: true,
+  singleQuote: true,
+  tabWidth: 2,
+  useTabs: false,
+  trailingComma: 'es5',
+  bracketSpacing: true,
+  arrowParens: 'always',
+  printWidth: 80,
+  endOfLine: 'lf'
+}
+```
+
+### Usage
+
+Formatting is automatically included in analysis results:
+
+```js
+const report = await codeCheck.analyze(code);
+
+console.log(report.formatted);  // Formatted code
+console.log(report.diff);       // Unified diff
+console.log(report.formatStats); // { added, removed, unchanged }
+```
+
+### Custom Configuration
+
+Override default settings:
+
+```js
+const report = await codeCheck.analyze(code, {
+  language: 'javascript',
+  formatOptions: {
+    printWidth: 100,
+    semi: false,
+    singleQuote: false,
+  }
+});
+```
+
+### Benefits
+
+- **No more hardcoded formatters**: Uses industry-standard Prettier
+- **Consistent formatting**: Same tool used by millions of developers
+- **Reliable**: No external CLI dependencies or fallback hacks
+- **Fast**: Native JavaScript implementation
+- **Configurable**: Override any Prettier option
+
+### For Python
+
+Python is not supported by Prettier or any reliable npm package. For Python formatting, use:
+
+- **Black**: `pip install black` - The uncompromising Python code formatter
+- **Ruff**: `pip install ruff` - An extremely fast Python linter and formatter
+- **autopep8**: `pip install autopep8` - Automatically formats Python code to conform to PEP 8
+
+Example:
+```bash
+# Using Black
+black your_file.py
+
+# Using Ruff
+ruff format your_file.py
+```
 
 ---
 
