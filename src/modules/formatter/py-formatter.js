@@ -9,11 +9,10 @@
  * - Ruff: pip install ruff
  * - autopep8: pip install autopep8
  *
- * @param {string} code    - raw Python source code
- * @param {object} options - formatting options (unused)
+ * @param {string} code - raw Python source code
  * @returns {Promise<{ formatted: string, tool: string, error: string|null }>}
  */
-async function format(code, options = {}) {
+async function format(code) {
   return {
     formatted: code,
     tool: "none",
