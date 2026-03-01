@@ -8,7 +8,7 @@ const complexity = require("../modules/complexity");
 class CAnalyzer extends BaseAnalyzer {
   constructor(config) {
     super(config);
-    this.language = "c";
+    // Don't set language here - it will be set by the analyze method
   }
 
   getSupportedExtensions() {
@@ -20,13 +20,16 @@ class CAnalyzer extends BaseAnalyzer {
   }
 
   async analyze(code, options = {}) {
-    const { bugs, lint } = bugLint.run(code, this.language, options);
+    // Use the language from options, or default to 'c'
+    const language = options.language || 'c';
+    
+    const { bugs, lint } = bugLint.run(code, language, options);
 
     // Run security checks
-    const securityIssues = await security.run(code, this.language, options);
+    const securityIssues = await security.run(code, language, options);
 
     // Run complexity checks
-    const complexityResult = complexity.runComplexityChecks(code, this.language, options);
+    const complexityResult = complexity.runComplexityChecks(code, language, options);
 
     return {
       bugs,

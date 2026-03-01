@@ -97,6 +97,22 @@ function topLanguage(confidences) {
  * }}
  */
 function detect(code, options = {}) {
+  // ── Step 0: If language is explicitly provided, use it ────────────────────
+  if (options.language) {
+    const lang = options.language.toLowerCase();
+    // Run heuristics for allScores info
+    const scores = scoreByHeuristics(code);
+    const allScores = toConfidencePercents(scores);
+    
+    return {
+      language: lang,
+      confidence: 100, // explicitly provided
+      method: "explicit",
+      supported: SUPPORTED_LANGUAGES.includes(lang),
+      allScores,
+    };
+  }
+
   // ── Step 1: Try extension detection ───────────────────────────────────────
   if (options.filePath) {
     const ext = path.extname(options.filePath).toLowerCase().replace(".", "");

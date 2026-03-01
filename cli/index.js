@@ -389,11 +389,21 @@ function printProjectReport(report) {
 
 async function runWatch(pattern, opts) {
     const absPattern = path.resolve(pattern);
+    
+    // Frontend URL - can be configured via environment variable
+    const frontendUrl = process.env.CODE_MAESTER_FRONTEND_URL || "http://localhost:5173";
+    const watchUrl = `${frontendUrl}/watch`;
 
     console.log(`\n${bold(c("cyan", "code-maester"))} ${c("green", "—")} ${bold("Watch Mode")}`);
     console.log(dim("━".repeat(60)));
     info(`Watching : ${c("cyan", pattern)}`);
     info(`Backend  : ${c("cyan", opts.server)}`);
+    console.log(dim("━".repeat(60)));
+    
+    // Display the live demo link prominently
+    console.log(`\n  ${c("green", "🌐")} ${bold("Live Demo:")} ${c("cyan", bold(watchUrl))}`);
+    console.log(`  ${dim("Open this URL in your browser to see real-time updates")}\n`);
+    console.log(dim("━".repeat(60)));
     console.log(dim("Press Ctrl+C to stop\n"));
 
     // Connect to backend WebSocket
@@ -495,6 +505,8 @@ function printHelp() {
 
   ${bold("Watch mode flow:")}
     file save → local analysis → push to backend WS → browser updates live
+    Displays a clickable link to the live demo (default: http://localhost:5173/watch)
+    Configure with CODE_MAESTER_FRONTEND_URL environment variable
 
   ${bold("Project mode:")}
     Detects unused exports and circular dependencies across all files

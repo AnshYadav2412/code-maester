@@ -23,27 +23,8 @@ function detect(code) {
   });
 
   // Pass 2 — find unguarded dereferences
-  const reported = new Set();
-  const checkedVars = new Set(); // Track variables that have been checked
-
+  const reported = new Set(); // avoid duplicate issues for same var
   lines.forEach((line, i) => {
-    // Track null checks - look for early returns or if statements
-    const earlyReturnMatch = line.match(/if\s*\(\s*!(\w+)\s*\)/);
-    if (earlyReturnMatch) {
-      const nextLine = lines[i + 1] || "";
-      if (nextLine.includes("return")) {
-        // Early return pattern - variable is safe after this point
-        checkedVars.add(earlyReturnMatch[1]);
-      }
-    }
-
-    // Track if (var) checks
-    const ifCheckMatch = line.match(/if\s*\(\s*(\w+)\s*\)/);
-    if (ifCheckMatch) {
-      checkedVars.add(ifCheckMatch[1]);
-    }
-
-    // Find dereferences
     const matches = [...line.matchAll(/(\w+)\.([\w]+)/g)];
     if (matches.length === 0) return;
 
@@ -51,25 +32,17 @@ function detect(code) {
       const varName = match[1];
       if (!riskyVars.has(varName)) continue;
       if (reported.has(`${varName}:${i}`)) continue;
-      if (checkedVars.has(varName)) continue; // Already checked
 
-      // Look for optional chaining
-      if (line.includes(`${varName}?.`)) continue;
-
-      // Context includes current line AND 10 lines above (catches most patterns)
-      const contextStart = Math.max(0, i - 10);
-      const context = lines.slice(contextStart, i + 1).join("\n");
-
-      // Check for various null check patterns
+      // Context includes current line AND 3 lines above (catches inline guards)
+      const context = lines.slice(Math.max(0, i - 3), i + 1).join("\n");
       const hasNullCheck =
         context.includes(`if (${varName})`) ||
         context.includes(`if(${varName})`) ||
-        context.includes(`if (!${varName})`) ||
-        context.includes(`if(!${varName})`) ||
         context.includes(`if (${varName} !==`) ||
         context.includes(`if (${varName} !=`) ||
         context.includes(`if(${varName} !==`) ||
         context.includes(`if(${varName} !=`) ||
+        context.includes(`${varName}?.`) ||
         new RegExp(`\\b${varName}\\s*&&`).test(context) ||
         new RegExp(`&&\\s*${varName}`).test(context) ||
         new RegExp(`${varName}\\s*!==\\s*(null|undefined)`).test(context) ||
@@ -79,7 +52,7 @@ function detect(code) {
         reported.add(`${varName}:${i}`);
         issues.push({
           type: "bug",
-          severity: "warning", // Changed from error to warning
+          severity: "error",
           rule: "null-deref",
           line: i + 1,
           column: line.indexOf(varName) + 1,

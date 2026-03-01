@@ -411,6 +411,7 @@ code-maester src/app.js --watch --server ws://localhost:3001/ws
 2. **Auto-Analysis**: Runs analysis automatically on every save
 3. **WebSocket Push**: Sends results to backend via WebSocket
 4. **Live Updates**: Browser dashboard updates instantly without refresh
+5. **Live Demo Link**: Displays a clickable link to the web dashboard
 
 **Terminal Output:**
 ```
@@ -418,6 +419,14 @@ code-maester — Watch Mode
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 [2:30:15 pm] ℹ Watching : src/**/*.js
 [2:30:15 pm] ℹ Backend  : ws://localhost:3001/ws
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  🌐 Live Demo: http://localhost:5173/watch
+  Open this URL in your browser to see real-time updates
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Press Ctrl+C to stop
+
 [2:30:15 pm] ✔ Connected to backend WebSocket
 [2:30:15 pm] ✔ Watcher ready — waiting for file changes…
 
@@ -425,6 +434,21 @@ code-maester — Watch Mode
 [2:30:42 pm]   Score: 85.2  Grade: B  Bugs: 2  Security: 1  Lint: 3
 [2:30:42 pm] ✔ Result pushed to backend ✅
 ```
+
+**Configuring the Frontend URL:**
+
+By default, the watch mode displays `http://localhost:5173/watch` as the live demo link. You can customize this for production deployments:
+
+```bash
+# Set via environment variable
+export CODE_MAESTER_FRONTEND_URL=https://your-domain.com
+code-maester "src/**/*.js" --watch
+
+# Or inline
+CODE_MAESTER_FRONTEND_URL=https://your-domain.com code-maester "src/**/*.js" --watch
+```
+
+The watch mode will automatically append `/watch` to the URL, so if you set `CODE_MAESTER_FRONTEND_URL=https://example.com`, the displayed link will be `https://example.com/watch`.
 
 **Web Dashboard Integration:**
 
@@ -1021,6 +1045,81 @@ Plugins let you extend the analyser with custom rules. Every plugin must impleme
 ```
 
 Plugins registered via `use()` run automatically inside `analyze()` and `analyzeFile()`.
+
+---
+
+## Configuration
+
+### Environment Variables
+
+Code Maester supports the following environment variables for configuration:
+
+#### `CODE_MAESTER_FRONTEND_URL`
+
+Configures the frontend URL displayed in watch mode. This is useful when deploying to production or using a custom domain.
+
+**Default:** `http://localhost:5173`
+
+**Usage:**
+
+```bash
+# Linux/Mac
+export CODE_MAESTER_FRONTEND_URL=https://your-domain.com
+code-maester "src/**/*.js" --watch
+
+# Windows (CMD)
+set CODE_MAESTER_FRONTEND_URL=https://your-domain.com
+code-maester "src/**/*.js" --watch
+
+# Windows (PowerShell)
+$env:CODE_MAESTER_FRONTEND_URL="https://your-domain.com"
+code-maester "src/**/*.js" --watch
+
+# Inline (Linux/Mac)
+CODE_MAESTER_FRONTEND_URL=https://your-domain.com code-maester "src/**/*.js" --watch
+```
+
+**Example Output:**
+
+```
+code-maester — Watch Mode
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[2:30:15 pm] ℹ Watching : src/**/*.js
+[2:30:15 pm] ℹ Backend  : ws://localhost:3001/ws
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  🌐 Live Demo: https://your-domain.com/watch
+  Open this URL in your browser to see real-time updates
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+**Note:** The `/watch` path is automatically appended to the URL.
+
+### API Configuration
+
+You can configure global defaults using the `config()` method:
+
+```javascript
+const codeCheck = require('code-maester');
+
+codeCheck.config({
+  weights: {
+    bug:        0.35,
+    security:   0.30,
+    complexity: 0.15,
+    redundancy: 0.10,
+    lint:       0.10,
+  },
+  thresholds: {
+    complexityLimit:     10,
+    nestingLimit:        3,
+    functionLengthLimit: 50,
+  },
+});
+```
+
+**Important:** Weights must sum to 1.0.
 
 ---
 

@@ -109,7 +109,9 @@ async function analyze(code, options = {}) {
 
   if (AnalyzerClass) {
     const analyzer = new AnalyzerClass(globalConfig);
-    const result = await analyzer.analyze(code, options);
+    // Pass the detected language in options
+    const analyzerOptions = { ...options, language: detection.language };
+    const result = await analyzer.analyze(code, analyzerOptions);
     bugs = result.bugs;
     lint = result.lint;
   }
